@@ -1,81 +1,50 @@
 ---
-import { formatDate } from '../../utils/formatters';
+import { formatDate, calculateReadingTime } from '../../lib/utils.js';
 
-interface Props {
-  post: {
-    id: number;
-    title: string;
-    slug: string;
-    excerpt: string;
-    featured_image?: string;
-    published_at: Date;
-    reading_time: number;
-    author: {
-      username: string;
-      full_name?: string;
-    };
-    category?: {
-      name: string;
-      slug: string;
-    };
-  };
-  featured?: boolean;
-}
-
-const { post, featured = false } = Astro.props;
-
-// Default image if none provided
-const imageUrl = post.featured_image || '/images/default-post.jpg';
+const { post, author, showExcerpt = true } = Astro.props;
 ---
 
-<article class={`bg-white rounded-lg shadow-sm overflow-hidden transition-transform duration-300 hover:-translate-y-1 hover:shadow-md ${featured ? 'lg:flex' : ''}`}>
-  <a href={`/blog/${post.slug}`} class={`block ${featured ? 'lg:w-1/2' : ''}`} aria-label={post.title}>
-    <div class="relative overflow-hidden aspect-video">
+<article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+  {post.featured_image && (
+    <a href={`/blog/${post.slug}`} class="block overflow-hidden">
       <img 
-        src={imageUrl} 
+        src={post.featured_image} 
         alt={post.title} 
-        class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-        width="800"
-        height="450"
-        loading="lazy"
+        class="w-full h-48 object-cover transition-transform duration-300 hover:scale-105"
       />
-      {post.category && (
-        <span class="absolute top-4 left-4 bg-primary-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
-          {post.category.name}
-        </span>
-      )}
-    </div>
-  </a>
+    </a>
+  )}
   
-  <div class={`p-5 ${featured ? 'lg:w-1/2 lg:flex lg:flex-col lg:justify-center' : ''}`}>
-    <div class="flex items-center text-sm text-gray-500 mb-2">
+  <div class="p-5">
+    <div class="flex items-center space-x-2 text-sm text-neutral-500 mb-2">
       <span>{formatDate(post.published_at)}</span>
-      <span class="mx-2">•</span>
-      <span>{post.reading_time || 5} min read</span>
+      <span>•</span>
+      <span>{calculateReadingTime(post.content)} min read</span>
     </div>
     
-    <h2 class="text-xl font-heading font-semibold mb-2 text-gray-800 leading-tight">
-      <a href={`/blog/${post.slug}`} class="hover:text-primary-600 transition-colors duration-200">
-        {post.title}
-      </a>
+    <h2 class="text-xl font-heading font-bold mb-2 hover:text-primary-600 transition-colors">
+      <a href={`/blog/${post.slug}`}>{post.title}</a>
     </h2>
     
-    <p class="text-gray-600 line-clamp-3 mb-4">
-      {post.excerpt}
-    </p>
+    {showExcerpt && post.excerpt && (
+      <p class="text-neutral-600 mb-4">{post.excerpt}</p>
+    )}
     
     <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <div class="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mr-2">
-          {post.author.full_name?.charAt(0) || post.author.username.charAt(0)}
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-medium">
+          {author.name.charAt(0)}
         </div>
-        <span class="text-sm text-gray-700">{post.author.full_name || post.author.username}</span>
+        <span class="text-sm text-neutral-600">{author.name}</span>
       </div>
       
-      <a href={`/blog/${post.slug}`} class="text-primary-600 text-sm font-medium hover:text-primary-700 transition-colors duration-200 flex items-center">
+      <a 
+        href={`/blog/${post.slug}`}
+        class="text-sm text-primary-600 hover:text-primary-800 font-medium flex items-center"
+      >
         Read more
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
         </svg>
       </a>
     </div>

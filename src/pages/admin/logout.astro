@@ -1,0 +1,11 @@
+---
+import { isAuthenticated } from '../../utils/auth';
+
+// Clear the authentication token
+Astro.cookies.delete('token', {
+  path: '/'
+});
+
+// Redirect to login page
+return Astro.redirect('/admin/login');
+---

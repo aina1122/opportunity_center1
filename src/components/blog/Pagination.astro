@@ -1,0 +1,135 @@
+---
+const { currentPage, totalPages, baseUrl } = Astro.props;
+
+// Function to generate a range of page numbers
+function generatePageRange(currentPage, totalPages) {
+  const maxPagesToShow = 5;
+  
+  if (totalPages <= maxPagesToShow) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  
+  const leftOffset = Math.floor(maxPagesToShow / 2);
+  const rightOffset = maxPagesToShow - leftOffset - 1;
+  
+  let startPage = Math.max(currentPage - leftOffset, 1);
+  let endPage = Math.min(currentPage + rightOffset, totalPages);
+  
+  // Adjust if we're near the start or end
+  if (startPage <= 1) {
+    endPage = Math.min(maxPagesToShow, totalPages);
+  }
+  
+  if (endPage >= totalPages) {
+    startPage = Math.max(1, totalPages - maxPagesToShow + 1);
+  }
+  
+  return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+}
+
+const pages = generatePageRange(currentPage, totalPages);
+
+// Helper for URL construction
+function getPageUrl(page) {
+  if (page === 1) {
+    return baseUrl;
+  }
+  return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}page=${page}`;
+}
+---
+
+{totalPages > 1 && (
+  <nav aria-label="Pagination" class="my-8">
+    <ul class="flex items-center justify-center space-x-2">
+      <!-- Previous page -->
+      <li>
+        <a 
+          href={currentPage > 1 ? getPageUrl(currentPage - 1) : '#'}
+          class:list={[
+            'px-3 py-2 rounded-md text-sm font-medium flex items-center',
+            currentPage > 1 
+              ? 'text-primary-700 hover:bg-primary-50' 
+              : 'text-neutral-400 cursor-not-allowed'
+          ]}
+          aria-label="Previous page"
+          aria-disabled={currentPage === 1}
+          tabindex={currentPage === 1 ? '-1' : undefined}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Prev
+        </a>
+      </li>
+      
+      <!-- First page if not in range -->
+      {!pages.includes(1) && (
+        <>
+          <li>
+            <a 
+              href={getPageUrl(1)}
+              class="px-3 py-2 rounded-md text-sm font-medium text-primary-700 hover:bg-primary-50"
+            >
+              1
+            </a>
+          </li>
+          <li class="text-neutral-400">...</li>
+        </>
+      )}
+      
+      <!-- Page numbers -->
+      {pages.map(page => (
+        <li>
+          <a 
+            href={getPageUrl(page)}
+            class:list={[
+              'px-3 py-2 rounded-md text-sm font-medium',
+              page === currentPage 
+                ? 'bg-primary-600 text-white' 
+                : 'text-primary-700 hover:bg-primary-50'
+            ]}
+            aria-current={page === currentPage ? 'page' : undefined}
+          >
+            {page}
+          </a>
+        </li>
+      ))}
+      
+      <!-- Last page if not in range -->
+      {!pages.includes(totalPages) && totalPages > 1 && (
+        <>
+          <li class="text-neutral-400">...</li>
+          <li>
+            <a 
+              href={getPageUrl(totalPages)}
+              class="px-3 py-2 rounded-md text-sm font-medium text-primary-700 hover:bg-primary-50"
+            >
+              {totalPages}
+            </a>
+          </li>
+        </>
+      )}
+      
+      <!-- Next page -->
+      <li>
+        <a 
+          href={currentPage < totalPages ? getPageUrl(currentPage + 1) : '#'}
+          class:list={[
+            'px-3 py-2 rounded-md text-sm font-medium flex items-center',
+            currentPage < totalPages 
+              ? 'text-primary-700 hover:bg-primary-50' 
+              : 'text-neutral-400 cursor-not-allowed'
+          ]}
+          aria-label="Next page"
+          aria-disabled={currentPage === totalPages}
+          tabindex={currentPage === totalPages ? '-1' : undefined}
+        >
+          Next
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </li>
+    </ul>
+  </nav>
+)}

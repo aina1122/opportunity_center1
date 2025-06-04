@@ -1,0 +1,135 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Breadcrumb from '../components/layout/Breadcrumb.astro';
+import ArticleSchema from '../components/seo/ArticleSchema.astro';
+import { formatDate, calculateReadingTime } from '../lib/utils.js';
+
+const { post, author, relatedPosts = [] } = Astro.props;
+
+// SEO
+const ogImage = post.featured_image || '/images/og-image.jpg';
+const breadcrumbItems = [
+  { label: 'Blog', href: '/blog' },
+  { label: post.title }
+];
+---
+
+<BaseLayout 
+  title={post.meta_title || post.title} 
+  description={post.meta_description || post.excerpt}
+  canonical={post.canonical_url}
+  ogImage={ogImage}
+>
+  <ArticleSchema post={post} author={author} slot="head" />
+  
+  <div class="container mx-auto px-4 py-8">
+    <Breadcrumb items={breadcrumbItems} />
+    
+    <article class="max-w-4xl mx-auto bg-white rounded-xl shadow-sm overflow-hidden mt-6">
+      {post.featured_image && (
+        <div class="w-full">
+          <img 
+            src={post.featured_image} 
+            alt={post.title} 
+            class="w-full h-80 object-cover"
+          />
+        </div>
+      )}
+      
+      <div class="p-6 md:p-8">
+        <header class="mb-8">
+          <h1 class="text-3xl md:text-4xl font-heading font-bold text-neutral-900 mb-3">
+            {post.title}
+          </h1>
+          
+          <div class="flex flex-wrap items-center text-sm text-neutral-600 mt-4 space-x-4">
+            <div class="flex items-center">
+              <div class="w-8 h-8 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-medium">
+                {author.name.charAt(0)}
+              </div>
+              <span class="ml-2">{author.name}</span>
+            </div>
+            
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <time datetime={post.published_at}>{formatDate(post.published_at)}</time>
+            </div>
+            
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{calculateReadingTime(post.content)} min read</span>
+            </div>
+          </div>
+        </header>
+        
+        <div class="prose prose-lg max-w-none">
+          <Fragment set:html={post.content} />
+        </div>
+        
+        <!-- Tags -->
+        {post.tags && post.tags.length > 0 && (
+          <div class="mt-8 pt-6 border-t border-neutral-200">
+            <h2 class="text-lg font-heading font-semibold mb-3">Tags</h2>
+            <div class="flex flex-wrap gap-2">
+              {post.tags.map((tag) => (
+                <a 
+                  href={`/tag/${tag.slug}`}
+                  class="px-3 py-1 bg-neutral-100 hover:bg-neutral-200 rounded-full text-sm text-neutral-700 transition-colors"
+                >
+                  {tag.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <!-- Author Bio -->
+        <div class="mt-8 pt-6 border-t border-neutral-200">
+          <div class="flex items-center">
+            <div class="w-12 h-12 bg-primary-100 text-primary-700 rounded-full flex items-center justify-center font-medium text-lg">
+              {author.name.charAt(0)}
+            </div>
+            <div class="ml-4">
+              <h3 class="font-heading font-semibold">{author.name}</h3>
+              <p class="text-sm text-neutral-600">Content Writer</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+    
+    <!-- Related Posts -->
+    {relatedPosts.length > 0 && (
+      <div class="max-w-4xl mx-auto mt-12">
+        <h2 class="text-2xl font-heading font-bold mb-6">Related Posts</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {relatedPosts.map((relatedPost) => (
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+              {relatedPost.featured_image && (
+                <a href={`/blog/${relatedPost.slug}`} class="block">
+                  <img 
+                    src={relatedPost.featured_image} 
+                    alt={relatedPost.title} 
+                    class="w-full h-40 object-cover"
+                  />
+                </a>
+              )}
+              <div class="p-4">
+                <h3 class="font-heading font-semibold text-lg mb-2">
+                  <a href={`/blog/${relatedPost.slug}`} class="hover:text-primary-600 transition-colors">
+                    {relatedPost.title}
+                  </a>
+                </h3>
+                <p class="text-sm text-neutral-600 line-clamp-2">{relatedPost.excerpt}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</BaseLayout>

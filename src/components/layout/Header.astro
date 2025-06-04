@@ -1,0 +1,90 @@
+---
+import { getSiteSettings } from '../../lib/seo.js';
+import NavLink from './NavLink.astro';
+
+const settings = await getSiteSettings();
+const siteTitle = settings.site_title || 'OpportunityCenter';
+const logoUrl = settings.logo_url || '/images/logo.png';
+---
+
+<header class="bg-white shadow-sm sticky top-0 z-50">
+  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <a href="/" class="flex items-center space-x-3">
+      <img src={logoUrl} alt={siteTitle} class="h-10 w-auto" />
+      <span class="text-xl font-heading font-bold text-primary-600">{siteTitle}</span>
+    </a>
+    
+    <div class="lg:hidden">
+      <button id="mobile-menu-button" class="text-neutral-700 hover:text-primary-500 focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+    
+    <nav class="hidden lg:flex items-center space-x-6">
+      <NavLink href="/" label="Home" />
+      <NavLink href="/scholarships" label="Scholarships" />
+      <NavLink href="/jobs" label="Jobs" />
+      <NavLink href="/internships" label="Internships" />
+      <NavLink href="/loans-funding" label="Loans & Funding" />
+      <NavLink href="/online-earning" label="Online Earning" />
+      <NavLink href="/about" label="About" />
+      <NavLink href="/contact" label="Contact" />
+    </nav>
+    
+    <div class="hidden lg:block">
+      <div class="relative">
+        <input 
+          type="text" 
+          placeholder="Search opportunities..." 
+          class="pl-10 pr-4 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 text-sm"
+        />
+        <div class="absolute left-3 top-2.5 text-neutral-400">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Mobile Menu -->
+  <div id="mobile-menu" class="hidden lg:hidden">
+    <div class="px-4 pt-2 pb-4 space-y-2 bg-white border-t border-neutral-200">
+      <a href="/" class="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:bg-primary-50 hover:text-primary-700">Home</a>
+      <a href="/scholarships" class="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:bg-primary-50 hover:text-primary-700">Scholarships</a>
+      <a href="/jobs" class="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:bg-primary-50 hover:text-primary-700">Jobs</a>
+      <a href="/internships" class="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:bg-primary-50 hover:text-primary-700">Internships</a>
+      <a href="/loans-funding" class="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:bg-primary-50 hover:text-primary-700">Loans & Funding</a>
+      <a href="/online-earning" class="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:bg-primary-50 hover:text-primary-700">Online Earning</a>
+      <a href="/about" class="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:bg-primary-50 hover:text-primary-700">About</a>
+      <a href="/contact" class="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:bg-primary-50 hover:text-primary-700">Contact</a>
+      
+      <div class="pt-2 relative">
+        <input 
+          type="text" 
+          placeholder="Search opportunities..." 
+          class="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400"
+        />
+        <div class="absolute left-3 top-4.5 text-neutral-400">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Mobile menu toggle
+  const mobileMenuButton = document.getElementById('mobile-menu-button');
+  const mobileMenu = document.getElementById('mobile-menu');
+  
+  if (mobileMenuButton && mobileMenu) {
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+  }
+</script>

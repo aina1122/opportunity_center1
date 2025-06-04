@@ -1,0 +1,114 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import PostCard from '../../components/blog/PostCard.astro';
+import db from '../../db/database';
+
+const page = parseInt(Astro.url.searchParams.get('page') || '1');
+const limit = 12;
+const offset = (page - 1) * limit;
+
+// Get total count of published posts
+const countResult = await db.query('SELECT COUNT(*) as count FROM posts WHERE status = ?', ['published']);
+const total = countResult[0]?.count || 0;
+const totalPages = Math.ceil(total / limit);
+
+// Fetch posts with author and category using JOINs
+const posts = await db.query(`
+  SELECT 
+    posts.*, 
+    users.username AS author_username,
+    users.full_name AS author_full_name,
+    categories.name AS category_name,
+    categories.slug AS category_slug
+  FROM posts
+  LEFT JOIN users ON posts.author_id = users.id
+  LEFT JOIN categories ON posts.category_id = categories.id
+  WHERE posts.status = ?
+  ORDER BY posts.published_at DESC
+  LIMIT ${limit} OFFSET ${offset}
+`, ['published']);
+
+
+// Format for UI
+const formattedPosts = posts.map((post: any) => ({
+  ...post,
+  author: {
+    username: post.author_username || '',
+    full_name: post.author_full_name || ''
+  },
+  category: post.category_name
+    ? { name: post.category_name, slug: post.category_slug }
+    : null
+}));
+---
+
+<MainLayout
+  title="Blog - OpportunityCenter"
+  description="Discover the latest scholarships, jobs, internships, and opportunities in USA and Europe."
+>
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center">
+        <h1 class="text-3xl md:text-5xl font-bold mb-6 font-heading">Latest Opportunities</h1>
+        <p class="text-xl text-primary-100">
+          Stay updated with the latest scholarships, jobs, and internships
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Posts Grid -->
+  <section class="py-16">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      {formattedPosts.length === 0 ? (
+        <div class="text-center py-12">
+          <h2 class="text-2xl font-semibold text-gray-900 mb-4">No posts found</h2>
+          <p class="text-gray-600">Check back later for new opportunities.</p>
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {formattedPosts.map((post) => (
+            <PostCard post={post} />
+          ))}
+        </div>
+      )}
+
+      <!-- Pagination -->
+      {totalPages > 1 && (
+        <div class="mt-12 flex justify-center">
+          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <a
+              href={`/blog?page=${page - 1}`}
+              class={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+                page === 1 ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              Previous
+            </a>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+              <a
+                href={`/blog?page=${pageNum}`}
+                class={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                  pageNum === page
+                    ? 'z-10 bg-primary-50 border-primary-500 text-primary-600'
+                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                {pageNum}
+              </a>
+            ))}
+            <a
+              href={`/blog?page=${page + 1}`}
+              class={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${
+                page === totalPages ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              Next
+            </a>
+          </nav>
+        </div>
+      )}
+    </div>
+  </section>
+</MainLayout>

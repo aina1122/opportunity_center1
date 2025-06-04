@@ -1,0 +1,178 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getAll } from '../../../lib/db.js';
+
+const settings = await getAll('settings');
+const seoSettings = {};
+
+settings.forEach(setting => {
+  seoSettings[setting.key_name] = setting.value;
+});
+---
+
+<AdminLayout>
+  <div class="bg-white rounded-lg shadow-sm p-6">
+    <h1 class="text-2xl font-heading font-bold mb-6">SEO Settings</h1>
+
+    <form id="seo-form" class="space-y-6">
+      <div>
+        <h2 class="text-lg font-medium mb-4">General SEO</h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label for="site-title" class="block text-sm font-medium text-neutral-700">Site Title</label>
+            <input 
+              type="text" 
+              id="site-title" 
+              name="site_title"
+              value={seoSettings.site_title}
+              class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label for="site-description" class="block text-sm font-medium text-neutral-700">Site Description</label>
+            <textarea 
+              id="site-description" 
+              name="site_description"
+              rows="3"
+              class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            >{seoSettings.site_description}</textarea>
+          </div>
+
+          <div>
+            <label for="site-keywords" class="block text-sm font-medium text-neutral-700">Site Keywords</label>
+            <input 
+              type="text" 
+              id="site-keywords" 
+              name="site_keywords"
+              value={seoSettings.site_keywords}
+              class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+            <p class="mt-1 text-sm text-neutral-500">Separate keywords with commas</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-medium mb-4">Social Media</h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label for="og-title" class="block text-sm font-medium text-neutral-700">Default Open Graph Title</label>
+            <input 
+              type="text" 
+              id="og-title" 
+              name="og_title"
+              value={seoSettings.og_title}
+              class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label for="og-description" class="block text-sm font-medium text-neutral-700">Default Open Graph Description</label>
+            <textarea 
+              id="og-description" 
+              name="og_description"
+              rows="3"
+              class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            >{seoSettings.og_description}</textarea>
+          </div>
+
+          <div>
+            <label for="og-image" class="block text-sm font-medium text-neutral-700">Default Open Graph Image</label>
+            <input 
+              type="text" 
+              id="og-image" 
+              name="og_image"
+              value={seoSettings.og_image}
+              class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-medium mb-4">Analytics & Tracking</h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label for="google-analytics" class="block text-sm font-medium text-neutral-700">Google Analytics ID</label>
+            <input 
+              type="text" 
+              id="google-analytics" 
+              name="google_analytics"
+              value={seoSettings.google_analytics}
+              class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+          </div>
+
+          <div>
+            <label for="adsense-client" class="block text-sm font-medium text-neutral-700">Google AdSense Client ID</label>
+            <input 
+              type="text" 
+              id="adsense-client" 
+              name="adsense_client"
+              value={seoSettings.adsense_client}
+              class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-medium mb-4">Robots.txt</h2>
+        
+        <div>
+          <label for="robots-txt" class="block text-sm font-medium text-neutral-700">Robots.txt Content</label>
+          <textarea 
+            id="robots-txt" 
+            name="robots_txt"
+            rows="6"
+            class="mt-1 block w-full font-mono text-sm rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          >{seoSettings.robots_txt || `User-agent: *\nAllow: /\nDisallow: /admin/\n\nSitemap: ${process.env.SITE_URL}/sitemap.xml`}</textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button 
+          type="submit"
+          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        >
+          Save Settings
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('seo-form');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+      
+      try {
+        const response = await fetch('/api/settings', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          },
+          body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+          alert('Settings saved successfully');
+        } else {
+          alert('Failed to save settings');
+        }
+      } catch (error) {
+        console.error('Error saving settings:', error);
+        alert('An error occurred while saving settings');
+      }
+    });
+  </script>
+</AdminLayout>

@@ -50,15 +50,34 @@ async function getById(table: string, id: number) {
 }
 
 // Insert a new row
+// async function insert(table: string, data: Record<string, any>) {
+//   try {
+//     const keys = Object.keys(data);
+//     const values = Object.values(data);
+//     const placeholders = keys.map(() => '?').join(', ');
+    
+//     const sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
+//     const [result]: any = await pool.execute(sql, values);
+    
+//     return {
+//       id: result.insertId,
+//       ...data
+//     };
+//   } catch (error) {
+//     console.error(`Error inserting into ${table}:`, error);
+//     throw error;
+//   }
+// }
 async function insert(table: string, data: Record<string, any>) {
   try {
     const keys = Object.keys(data);
     const values = Object.values(data);
-    const placeholders = keys.map(() => '?').join(', ');
-    
+    const placeholders = values.map((v) => (v === null ? 'NULL' : '?')).join(', ');
     const sql = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
-    const [result]: any = await pool.execute(sql, values);
-    
+
+    const filteredValues = values.filter((v) => v !== null); // Only pass non-null values
+    const [result]: any = await pool.execute(sql, filteredValues);
+
     return {
       id: result.insertId,
       ...data
@@ -68,6 +87,7 @@ async function insert(table: string, data: Record<string, any>) {
     throw error;
   }
 }
+
 
 // Update an existing row
 async function update(table: string, id: number, data: Record<string, any>) {

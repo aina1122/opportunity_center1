@@ -2,18 +2,18 @@
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { getAll } from '../../../lib/db.js';
 
-const categories = await getAll('categories');
+const tags = await getAll('tags');
 ---
 
 <AdminLayout>
   <div class="bg-white rounded-lg shadow-sm p-6">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-heading font-bold">Categories</h1>
+      <h1 class="text-2xl font-heading font-bold">Tags</h1>
       <button 
-        id="add-category"
+        id="add-tag"
         class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
       >
-        Add New Category
+        Add New Tag
       </button>
     </div>
 
@@ -23,26 +23,24 @@ const categories = await getAll('categories');
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Name</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Slug</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Description</th>
             <th class="px-6 py-3 text-right text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-neutral-200">
-          {categories.map((category) => (
+          {tags.map((tag) => (
             <tr>
-              <td class="px-6 py-4 text-sm font-medium text-neutral-900">{category.name}</td>
-              <td class="px-6 py-4 text-sm text-neutral-500">{category.slug}</td>
-              <td class="px-6 py-4 text-sm text-neutral-500">{category.description}</td>
+              <td class="px-6 py-4 text-sm font-medium text-neutral-900">{tag.name}</td>
+              <td class="px-6 py-4 text-sm text-neutral-500">{tag.slug}</td>
               <td class="px-6 py-4 text-right text-sm font-medium">
                 <button 
-                  class="text-primary-600 hover:text-primary-900 mr-3 edit-category"
-                  data-category={JSON.stringify(category)}
+                  class="text-primary-600 hover:text-primary-900 mr-3 edit-tag"
+                  data-tag={JSON.stringify(tag)}
                 >
                   Edit
                 </button>
                 <button 
-                  class="text-red-600 hover:text-red-900 delete-category"
-                  data-category-id={category.id}
+                  class="text-red-600 hover:text-red-900 delete-tag"
+                  data-tag-id={tag.id}
                 >
                   Delete
                 </button>
@@ -54,13 +52,13 @@ const categories = await getAll('categories');
     </div>
   </div>
 
-  <!-- Category Modal -->
-  <div id="category-modal" class="hidden fixed inset-0 bg-neutral-500 bg-opacity-75 flex items-center justify-center">
+  <!-- Tag Modal -->
+  <div id="tag-modal" class="hidden fixed inset-0 bg-neutral-500 bg-opacity-75 flex items-center justify-center">
     <div class="bg-white rounded-lg p-6 max-w-md w-full">
-      <h2 id="modal-title" class="text-xl font-heading font-bold mb-4">Add New Category</h2>
+      <h2 id="modal-title" class="text-xl font-heading font-bold mb-4">Add New Tag</h2>
       
-      <form id="category-form" class="space-y-4">
-        <input type="hidden" id="category-id">
+      <form id="tag-form" class="space-y-4">
+        <input type="hidden" id="tag-id">
         
         <div>
           <label for="name" class="block text-sm font-medium text-neutral-700">Name</label>
@@ -71,16 +69,6 @@ const categories = await getAll('categories');
             required
             class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
           />
-        </div>
-
-        <div>
-          <label for="description" class="block text-sm font-medium text-neutral-700">Description</label>
-          <textarea 
-            id="description" 
-            name="description"
-            rows="3"
-            class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-          ></textarea>
         </div>
 
         <div class="flex justify-end space-x-4 mt-6">
@@ -103,14 +91,14 @@ const categories = await getAll('categories');
   </div>
 
   <script>
-    const modal = document.getElementById('category-modal');
-    const form = document.getElementById('category-form');
-    const addButton = document.getElementById('add-category');
+    const modal = document.getElementById('tag-modal');
+    const form = document.getElementById('tag-form');
+    const addButton = document.getElementById('add-tag');
     const closeButton = document.getElementById('close-modal');
     const modalTitle = document.getElementById('modal-title');
 
     // Show modal
-    function showModal(title = 'Add New Category') {
+    function showModal(title = 'Add New Tag') {
       modalTitle.textContent = title;
       modal.classList.remove('hidden');
     }
@@ -119,10 +107,10 @@ const categories = await getAll('categories');
     function hideModal() {
       modal.classList.add('hidden');
       form.reset();
-      document.getElementById('category-id').value = '';
+      document.getElementById('tag-id').value = '';
     }
 
-    // Add category button click
+    // Add tag button click
     addButton.addEventListener('click', () => {
       showModal();
     });
@@ -130,24 +118,23 @@ const categories = await getAll('categories');
     // Close modal button click
     closeButton.addEventListener('click', hideModal);
 
-    // Edit category buttons
-    document.querySelectorAll('.edit-category').forEach(button => {
+    // Edit tag buttons
+    document.querySelectorAll('.edit-tag').forEach(button => {
       button.addEventListener('click', () => {
-        const category = JSON.parse(button.dataset.category);
-        document.getElementById('category-id').value = category.id;
-        document.getElementById('name').value = category.name;
-        document.getElementById('description').value = category.description;
-        showModal('Edit Category');
+        const tag = JSON.parse(button.dataset.tag);
+        document.getElementById('tag-id').value = tag.id;
+        document.getElementById('name').value = tag.name;
+        showModal('Edit Tag');
       });
     });
 
-    // Delete category buttons
-    document.querySelectorAll('.delete-category').forEach(button => {
+    // Delete tag buttons
+    document.querySelectorAll('.delete-tag').forEach(button => {
       button.addEventListener('click', async () => {
-        if (confirm('Are you sure you want to delete this category?')) {
-          const categoryId = button.dataset.categoryId;
+        if (confirm('Are you sure you want to delete this tag?')) {
+          const tagId = button.dataset.tagId;
           try {
-            const response = await fetch(`/api/categories/${categoryId}`, {
+            const response = await fetch(`/api/tags/${tagId}`, {
               method: 'DELETE',
               headers: {
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -157,11 +144,11 @@ const categories = await getAll('categories');
             if (response.ok) {
               window.location.reload();
             } else {
-              alert('Failed to delete category');
+              alert('Failed to delete tag');
             }
           } catch (error) {
-            console.error('Error deleting category:', error);
-            alert('An error occurred while deleting the category');
+            console.error('Error deleting tag:', error);
+            alert('An error occurred while deleting the tag');
           }
         }
       });
@@ -171,13 +158,13 @@ const categories = await getAll('categories');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const categoryId = document.getElementById('category-id').value;
+      const tagId = document.getElementById('tag-id').value;
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
       
       try {
-        const response = await fetch(`/api/categories${categoryId ? `/${categoryId}` : ''}`, {
-          method: categoryId ? 'PUT' : 'POST',
+        const response = await fetch(`/api/tags${tagId ? `/${tagId}` : ''}`, {
+          method: tagId ? 'PUT' : 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -188,11 +175,11 @@ const categories = await getAll('categories');
         if (response.ok) {
           window.location.reload();
         } else {
-          alert('Failed to save category');
+          alert('Failed to save tag');
         }
       } catch (error) {
-        console.error('Error saving category:', error);
-        alert('An error occurred while saving the category');
+        console.error('Error saving tag:', error);
+        alert('An error occurred while saving the tag');
       }
     });
 

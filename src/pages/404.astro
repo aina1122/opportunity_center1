@@ -1,0 +1,51 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+const randomTips = [
+  "Try checking the URL for typos",
+  "Use the search bar to find what you're looking for",
+  "Browse our categories for similar content",
+  "Check out our latest posts",
+  "Contact us if you need help finding something"
+];
+
+const randomTip = randomTips[Math.floor(Math.random() * randomTips.length)];
+---
+
+<MainLayout
+  title="404 - Page Not Found - OpportunityCenter"
+  description="The page you're looking for doesn't exist. Browse our other opportunities or try searching."
+>
+  <div class="min-h-[70vh] flex items-center justify-center px-4 py-16">
+    <div class="max-w-xl text-center">
+      <h1 class="text-6xl font-bold text-primary-600 font-heading mb-4">404</h1>
+      <h2 class="text-2xl font-semibold text-gray-900 mb-4">Page Not Found</h2>
+      <p class="text-gray-600 mb-8">
+        Oops! The page you're looking for doesn't exist. {randomTip}
+      </p>
+      <div class="space-y-4">
+        <a 
+          href="/" 
+          class="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200"
+        >
+          Back to Home
+        </a>
+        <div class="flex justify-center space-x-4 mt-4">
+          <a 
+            href="/blog" 
+            class="text-primary-600 hover:text-primary-700"
+          >
+            Browse Blog
+          </a>
+          <span class="text-gray-300">|</span>
+          <a 
+            href="/contact" 
+            class="text-primary-600 hover:text-primary-700"
+          >
+            Contact Us
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</MainLayout>

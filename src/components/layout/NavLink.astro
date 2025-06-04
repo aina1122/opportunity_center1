@@ -1,0 +1,19 @@
+---
+const { href, label, isExternal = false } = Astro.props;
+const pathname = new URL(Astro.request.url).pathname;
+const isActive = pathname === href || pathname.startsWith(`${href}/`);
+---
+
+<a
+  href={href}
+  class:list={[
+    'px-1 py-2 text-sm font-medium transition-colors duration-200 relative',
+    isActive 
+      ? 'text-primary-700 font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary-500'
+      : 'text-neutral-700 hover:text-primary-600'
+  ]}
+  target={isExternal ? '_blank' : undefined}
+  rel={isExternal ? 'noopener noreferrer' : undefined}
+>
+  {label}
+</a>

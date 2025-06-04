@@ -1,0 +1,41 @@
+---
+import { getSiteSettings } from '../../lib/seo.js';
+
+const { post, author } = Astro.props;
+const settings = await getSiteSettings();
+const siteUrl = process.env.SITE_URL || 'https://opportunitycenter.site';
+
+// Generate article schema
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  'headline': post.title,
+  'description': post.meta_description || post.excerpt,
+  'image': post.featured_image ? `${siteUrl}${post.featured_image}` : undefined,
+  'author': {
+    '@type': 'Person',
+    'name': author.name
+  },
+  'publisher': {
+    '@type': 'Organization',
+    'name': settings.site_title || 'OpportunityCenter',
+    'logo': {
+      '@type': 'ImageObject',
+      'url': `${siteUrl}/images/logo.png`
+    }
+  },
+  'datePublished': post.published_at,
+  'dateModified': post.updated_at,
+  'mainEntityOfPage': {
+    '@type': 'WebPage',
+    '@id': `${siteUrl}/blog/${post.slug}`
+  }
+};
+
+// Remove undefined values
+const schema = JSON.stringify(articleSchema, (key, value) => {
+  if (value !== undefined) return value;
+});
+---
+
+<script type="application/ld+json" set:html={schema} />

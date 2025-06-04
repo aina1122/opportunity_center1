@@ -1,0 +1,211 @@
+---
+import AdminLayout from '../../components/admin/AdminLayout.astro';
+import db from '../../db/database';
+
+// Fetch current settings
+const settings: any = await db.query('SELECT * FROM settings');
+
+// Handle form submission
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    
+    // Update each setting
+    for (const [key, value] of formData.entries()) {
+      await db.query(
+        'INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+        [key, value, value]
+      );
+    }
+    
+    return Astro.redirect('/admin/settings?updated=true');
+  } catch (error) {
+    console.error('Error updating settings:', error);
+  }
+}
+
+const updated = Astro.url.searchParams.get('updated') === 'true';
+
+// Convert settings array to object for easier access
+const settingsObj = settings.reduce((acc: any, setting: any) => {
+  acc[setting.setting_key] = setting.setting_value;
+  return acc;
+}, {});
+---
+
+<AdminLayout title="Site Settings">
+  {updated && (
+    <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-green-700">Settings updated successfully!</p>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <div class="bg-white rounded-lg shadow-sm">
+    <form method="POST" class="divide-y divide-gray-200">
+      <!-- General Settings -->
+      <div class="p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">General Settings</h3>
+        <div class="space-y-6">
+          <div>
+            <label for="site_title" class="block text-sm font-medium text-gray-700">Site Title</label>
+            <input
+              type="text"
+              id="site_title"
+              name="site_title"
+              value={settingsObj.site_title}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          
+          <div>
+            <label for="site_description" class="block text-sm font-medium text-gray-700">Site Description</label>
+            <textarea
+              id="site_description"
+              name="site_description"
+              rows="3"
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            >{settingsObj.site_description}</textarea>
+          </div>
+          
+          <div>
+            <label for="logo_url" class="block text-sm font-medium text-gray-700">Logo URL</label>
+            <input
+              type="url"
+              id="logo_url"
+              name="logo_url"
+              value={settingsObj.logo_url}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Social Media Settings -->
+      <div class="p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Social Media</h3>
+        <div class="space-y-6">
+          <div>
+            <label for="social_facebook" class="block text-sm font-medium text-gray-700">Facebook URL</label>
+            <input
+              type="url"
+              id="social_facebook"
+              name="social_facebook"
+              value={settingsObj.social_facebook}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          
+          <div>
+            <label for="social_twitter" class="block text-sm font-medium text-gray-700">Twitter URL</label>
+            <input
+              type="url"
+              id="social_twitter"
+              name="social_twitter"
+              value={settingsObj.social_twitter}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          
+          <div>
+            <label for="social_instagram" class="block text-sm font-medium text-gray-700">Instagram URL</label>
+            <input
+              type="url"
+              id="social_instagram"
+              name="social_instagram"
+              value={settingsObj.social_instagram}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Settings -->
+      <div class="p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+        <div class="space-y-6">
+          <div>
+            <label for="contact_email" class="block text-sm font-medium text-gray-700">Contact Email</label>
+            <input
+              type="email"
+              id="contact_email"
+              name="contact_email"
+              value={settingsObj.contact_email}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- AdSense Settings -->
+      <div class="p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Google AdSense</h3>
+        <div class="space-y-6">
+          <div>
+            <label for="adsense_client_id" class="block text-sm font-medium text-gray-700">AdSense Client ID</label>
+            <input
+              type="text"
+              id="adsense_client_id"
+              name="adsense_client_id"
+              value={settingsObj.adsense_client_id}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          
+          <div>
+            <label for="adsense_slot_header" class="block text-sm font-medium text-gray-700">Header Ad Slot</label>
+            <input
+              type="text"
+              id="adsense_slot_header"
+              name="adsense_slot_header"
+              value={settingsObj.adsense_slot_header}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          
+          <div>
+            <label for="adsense_slot_sidebar" class="block text-sm font-medium text-gray-700">Sidebar Ad Slot</label>
+            <input
+              type="text"
+              id="adsense_slot_sidebar"
+              name="adsense_slot_sidebar"
+              value={settingsObj.adsense_slot_sidebar}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+          
+          <div>
+            <label for="adsense_slot_in_article" class="block text-sm font-medium text-gray-700">In-Article Ad Slot</label>
+            <input
+              type="text"
+              id="adsense_slot_in_article"
+              name="adsense_slot_in_article"
+              value={settingsObj.adsense_slot_in_article}
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="p-6">
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          >
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</AdminLayout>

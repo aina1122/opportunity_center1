@@ -1,0 +1,33 @@
+---
+import { authenticate, authorize } from '../lib/auth.js';
+import AdminLayoutComponent from '../components/admin/AdminLayout.jsx';
+
+// Check authentication
+const user = await authenticate(Astro.request);
+const isAuthorized = authorize(user, 'admin');
+
+// Redirect to login if not authenticated
+if (!isAuthorized) {
+  return Astro.redirect('/admin/login');
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Admin Dashboard | OpportunityCenter</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <AdminLayoutComponent client:load>
+      <slot />
+    </AdminLayoutComponent>
+  </body>
+</html>

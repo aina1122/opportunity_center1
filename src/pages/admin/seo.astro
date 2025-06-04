@@ -1,0 +1,137 @@
+---
+import AdminLayout from '../../components/admin/AdminLayout.astro';
+import db from '../../db/database';
+
+// Fetch posts with SEO data
+const posts: any = await db.query(`
+  SELECT p.id, p.title, p.slug, p.meta_title, p.meta_description, p.canonical_url,
+         ps.schema_type, ps.schema_data
+  FROM posts p
+  LEFT JOIN post_schema ps ON p.id = ps.post_id
+  WHERE p.status = 'published'
+  ORDER BY p.published_at DESC
+`);
+
+// Handle form submission
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const postId = parseInt(formData.get('post_id')?.toString() || '0');
+    const metaTitle = formData.get('meta_title')?.toString() || '';
+    const metaDescription = formData.get('meta_description')?.toString() || '';
+    const canonicalUrl = formData.get('canonical_url')?.toString() || '';
+    
+    // Update post SEO data
+    await db.update('posts', postId, {
+      meta_title: metaTitle,
+      meta_description: metaDescription,
+      canonical_url: canonicalUrl
+    });
+    
+    return Astro.redirect('/admin/seo?updated=true');
+  } catch (error) {
+    console.error('Error updating SEO data:', error);
+  }
+}
+
+const updated = Astro.url.searchParams.get('updated') === 'true';
+---
+
+<AdminLayout title="SEO Tools">
+  {updated && (
+    <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-green-700">SEO data updated successfully!</p>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+      <h2 class="text-lg font-medium text-gray-900">Post SEO Settings</h2>
+      <p class="mt-1 text-sm text-gray-500">
+        Manage SEO metadata for your published posts
+      </p>
+    </div>
+
+    <div class="divide-y divide-gray-200">
+      {posts.map((post: any) => (
+        <div class="p-6">
+          <form method="POST" class="space-y-6">
+            <input type="hidden" name="post_id" value={post.id} />
+            
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-medium text-gray-900">
+                <a href={`/blog/${post.slug}`} target="_blank" class="hover:text-primary-600">
+                  {post.title}
+                </a>
+              </h3>
+              <a
+                href={`/admin/posts/edit/${post.id}`}
+                class="text-sm text-primary-600 hover:text-primary-700"
+              >
+                Edit Post
+              </a>
+            </div>
+
+            <div>
+              <label for={`meta_title_${post.id}`} class="block text-sm font-medium text-gray-700">Meta Title</label>
+              <input
+                type="text"
+                id={`meta_title_${post.id}`}
+                name="meta_title"
+                value={post.meta_title || post.title}
+                maxlength="60"
+                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+              />
+              <p class="mt-1 text-sm text-gray-500">
+                Recommended length: 50-60 characters
+              </p>
+            </div>
+
+            <div>
+              <label for={`meta_description_${post.id}`} class="block text-sm font-medium text-gray-700">Meta Description</label>
+              <textarea
+                id={`meta_description_${post.id}`}
+                name="meta_description"
+                rows="2"
+                maxlength="160"
+                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+              >{post.meta_description}</textarea>
+              <p class="mt-1 text-sm text-gray-500">
+                Recommended length: 150-160 characters
+              </p>
+            </div>
+
+            <div>
+              <label for={`canonical_url_${post.id}`} class="block text-sm font-medium text-gray-700">Canonical URL</label>
+              <input
+                type="url"
+                id={`canonical_url_${post.id}`}
+                name="canonical_url"
+                value={post.canonical_url}
+                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+
+            <div class="flex justify-end">
+              <button
+                type="submit"
+                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                Update SEO
+              </button>
+            </div>
+          </form>
+        </div>
+      ))}
+    </div>
+  </div>
+</AdminLayout>

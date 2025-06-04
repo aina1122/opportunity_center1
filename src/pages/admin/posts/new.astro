@@ -1,0 +1,174 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getAll } from '../../../lib/db.js';
+
+// Get categories for dropdown
+const categories = await getAll('categories');
+---
+
+<AdminLayout>
+  <div class="bg-white rounded-lg shadow-sm p-6">
+    <h1 class="text-2xl font-heading font-bold mb-6">Create New Post</h1>
+
+    <form id="post-form" class="space-y-6">
+      <div>
+        <label for="title" class="block text-sm font-medium text-neutral-700">Title</label>
+        <input 
+          type="text" 
+          id="title" 
+          name="title" 
+          required
+          class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+        />
+      </div>
+
+      <div>
+        <label for="category" class="block text-sm font-medium text-neutral-700">Category</label>
+        <select 
+          id="category" 
+          name="category_id" 
+          required
+          class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+        >
+          <option value="">Select a category</option>
+          {categories.map((category) => (
+            <option value={category.id}>{category.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label for="featured-image" class="block text-sm font-medium text-neutral-700">Featured Image</label>
+        <input 
+          type="file" 
+          id="featured-image" 
+          name="featured_image"
+          accept="image/*"
+          class="mt-1 block w-full text-sm text-neutral-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-full file:border-0
+            file:text-sm file:font-semibold
+            file:bg-primary-50 file:text-primary-700
+            hover:file:bg-primary-100"
+        />
+      </div>
+
+      <div>
+        <label for="excerpt" class="block text-sm font-medium text-neutral-700">Excerpt</label>
+        <textarea 
+          id="excerpt" 
+          name="excerpt" 
+          rows="3"
+          class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+        ></textarea>
+      </div>
+
+      <div>
+        <label for="content" class="block text-sm font-medium text-neutral-700">Content</label>
+        <div id="editor" class="mt-1 min-h-[400px] border rounded-md"></div>
+      </div>
+
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium">SEO Settings</h3>
+        
+        <div>
+          <label for="meta-title" class="block text-sm font-medium text-neutral-700">Meta Title</label>
+          <input 
+            type="text" 
+            id="meta-title" 
+            name="meta_title"
+            class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          />
+        </div>
+
+        <div>
+          <label for="meta-description" class="block text-sm font-medium text-neutral-700">Meta Description</label>
+          <textarea 
+            id="meta-description" 
+            name="meta_description"
+            rows="2"
+            class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          ></textarea>
+        </div>
+
+        <div>
+          <label for="canonical-url" class="block text-sm font-medium text-neutral-700">Canonical URL</label>
+          <input 
+            type="url" 
+            id="canonical-url" 
+            name="canonical_url"
+            class="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          />
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-4">
+        <button 
+          type="button"
+          class="px-4 py-2 border border-neutral-300 rounded-md shadow-sm text-sm font-medium text-neutral-700 bg-white hover:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        >
+          Save as Draft
+        </button>
+        <button 
+          type="submit"
+          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+        >
+          Publish
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script>
+    // Initialize Quill editor
+    const quill = new Quill('#editor', {
+      theme: 'snow',
+      modules: {
+        toolbar: [
+          [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          ['blockquote', 'code-block'],
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          [{ 'script': 'sub'}, { 'script': 'super' }],
+          [{ 'indent': '-1'}, { 'indent': '+1' }],
+          [{ 'direction': 'rtl' }],
+          [{ 'color': [] }, { 'background': [] }],
+          [{ 'font': [] }],
+          [{ 'align': [] }],
+          ['clean'],
+          ['link', 'image']
+        ]
+      }
+    });
+
+    // Handle form submission
+    document.getElementById('post-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      formData.append('content', quill.root.innerHTML);
+      formData.append('status', 'published');
+      
+      try {
+        const response = await fetch('/api/posts', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          },
+          body: formData
+        });
+        
+        if (response.ok) {
+          window.location.href = '/admin/posts';
+        } else {
+          alert('Failed to create post');
+        }
+      } catch (error) {
+        console.error('Error creating post:', error);
+        alert('An error occurred while creating the post');
+      }
+    });
+  </script>
+</AdminLayout>

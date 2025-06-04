@@ -1,0 +1,30 @@
+---
+export interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+const { items } = Astro.props;
+---
+
+<nav aria-label="Breadcrumb" class="py-3">
+  <ol class="flex flex-wrap items-center space-x-1 text-sm">
+    <li>
+      <a href="/" class="text-primary-600 hover:text-primary-800 transition-colors">Home</a>
+    </li>
+    
+    {items.map((item: BreadcrumbItem, index: number) => (
+      <li class="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mx-1 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        
+        {index === items.length - 1 ? (
+          <span class="text-neutral-600 font-medium" aria-current="page">{item.label}</span>
+        ) : (
+          <a href={item.href} class="text-primary-600 hover:text-primary-800 transition-colors">{item.label}</a>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
