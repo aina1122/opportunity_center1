@@ -1,0 +1,81 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import PostCard from '../../components/blog/PostCard.astro';
+import db from '../../db/database';
+
+export async function getStaticPaths() {
+  const categories: any = await db.query('SELECT slug FROM categories');
+  return categories.map((category: any) => ({
+    params: { slug: category.slug },
+  }));
+}
+
+const { slug } = Astro.params;
+
+// Fetch category details
+const category: any = await db.query('SELECT * FROM categories WHERE slug = ?', [slug]);
+
+if (!category || category.length === 0) {
+  return Astro.redirect('/404');
+}
+
+// Fetch posts for this category
+const posts: any = await db.query(`
+  SELECT p.id, p.title, p.slug, p.excerpt, p.featured_image, p.published_at, p.reading_time,
+         u.username, u.full_name,
+         c.name as category_name, c.slug as category_slug
+  FROM posts p
+  JOIN users u ON p.author_id = u.id
+  JOIN categories c ON p.category_id = c.id
+  WHERE c.slug = ? AND p.status = 'published'
+  ORDER BY p.published_at DESC
+`, [slug]);
+
+// Format posts for display
+const formattedPosts = posts.map((post: any) => ({
+  ...post,
+  author: {
+    username: post.username,
+    full_name: post.full_name
+  },
+  category: {
+    name: post.category_name,
+    slug: post.category_slug
+  }
+}));
+---
+
+<MainLayout
+  title={`${category[0].name} - OpportunityCenter`}
+  description={category[0].meta_description || `Browse ${category[0].name} opportunities on OpportunityCenter`}
+>
+  <!-- Category Header -->
+  <section class="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center">
+        <h1 class="text-3xl md:text-5xl font-bold mb-6 font-heading">{category[0].name}</h1>
+        <p class="text-xl text-primary-100">
+          {category[0].description || `Browse the latest ${category[0].name.toLowerCase()} opportunities`}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Posts Grid -->
+  <section class="py-16">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      {formattedPosts.length === 0 ? (
+        <div class="text-center py-12">
+          <h2 class="text-2xl font-semibold text-gray-900 mb-4">No posts found</h2>
+          <p class="text-gray-600">Check back later for new opportunities in this category.</p>
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {formattedPosts.map((post: any) => (
+            <PostCard post={post} />
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</MainLayout>

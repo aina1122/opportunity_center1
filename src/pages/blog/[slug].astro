@@ -1,0 +1,234 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import { formatDate } from '../../utils/formatters';
+import { generateArticleSchemaScript } from '../../components/seo/ArticleSchema';
+import db from '../../db/database';
+import { marked } from 'marked';
+import sanitizeHtml from 'sanitize-html';
+
+const { slug } = Astro.params;
+
+// Fetch post details
+const post: any = await db.query(`
+  SELECT p.*, 
+         u.username, u.full_name, u.bio as author_bio,
+         c.name as category_name, c.slug as category_slug
+  FROM posts p
+  JOIN users u ON p.author_id = u.id
+  LEFT JOIN categories c ON p.category_id = c.id
+  WHERE p.slug = ? AND p.status = 'published'
+`, [slug]);
+
+if (!post || post.length === 0) {
+  return Astro.redirect('/404');
+}
+
+// Fetch post tags
+const tags: any = await db.query(`
+  SELECT t.name, t.slug
+  FROM tags t
+  JOIN post_tags pt ON t.id = pt.tag_id
+  WHERE pt.post_id = ?
+`, [post[0].id]);
+
+// Increment view count
+await db.query('UPDATE posts SET views = views + 1 WHERE id = ?', [post[0].id]);
+
+// Parse and sanitize markdown content
+const htmlContent = sanitizeHtml(marked(post[0].content), {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    img: ['src', 'alt', 'title', 'width', 'height', 'loading']
+  }
+});
+
+// Generate schema data
+const schemaScript = generateArticleSchemaScript({
+  title: post[0].title,
+  description: post[0].excerpt || '',
+  image: post[0].featured_image || `${Astro.site}images/default-post.jpg`,
+  publishedDate: new Date(post[0].published_at),
+  modifiedDate: new Date(post[0].updated_at),
+  authorName: post[0].full_name || post[0].username,
+  authorUrl: `${Astro.site}author/${post[0].username}`,
+  categoryName: post[0].category_name,
+  tags: tags.map((tag: any) => tag.name),
+  url: `${Astro.site}blog/${post[0].slug}`,
+  siteName: 'OpportunityCenter'
+});
+
+// Fetch related posts
+const relatedPosts: any = await db.query(`
+  SELECT p.id, p.title, p.slug, p.excerpt, p.featured_image, p.published_at, p.reading_time,
+         u.username, u.full_name,
+         c.name as category_name, c.slug as category_slug
+  FROM posts p
+  JOIN users u ON p.author_id = u.id
+  LEFT JOIN categories c ON p.category_id = c.id
+  WHERE p.category_id = ? 
+    AND p.id != ? 
+    AND p.status = 'published'
+  ORDER BY p.published_at DESC
+  LIMIT 3
+`, [post[0].category_id, post[0].id]);
+---
+
+<MainLayout
+  title={post[0].meta_title || post[0].title}
+  description={post[0].meta_description || post[0].excerpt}
+  canonical={post[0].canonical_url}
+  articleSchema={schemaScript}
+  openGraph={{
+    basic: {
+      title: post[0].title,
+      type: 'article',
+      image: post[0].featured_image || '/images/default-post.jpg',
+      url: `${Astro.site}blog/${post[0].slug}`,
+    },
+    optional: {
+      description: post[0].excerpt,
+    }
+  }}
+>
+  <article class="bg-white">
+    <!-- Hero Section -->
+    <div class="relative">
+      <div class="aspect-video w-full overflow-hidden">
+        <img
+          src={post[0].featured_image || '/images/default-post.jpg'}
+          alt={post[0].title}
+          class="w-full h-full object-cover"
+          width="1920"
+          height="1080"
+        />
+      </div>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div class="max-w-3xl">
+            {post[0].category_name && (
+              <a
+                href={`/category/${post[0].category_slug}`}
+                class="inline-block bg-primary-600 text-white text-sm font-medium px-3 py-1 rounded-full mb-4 hover:bg-primary-700 transition-colors duration-200"
+              >
+                {post[0].category_name}
+              </a>
+            )}
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-heading mb-4">
+              {post[0].title}
+            </h1>
+            <div class="flex items-center text-white/80 text-sm">
+              <span>{formatDate(post[0].published_at)}</span>
+              <span class="mx-2">•</span>
+              <span>{post[0].reading_time || 5} min read</span>
+              <span class="mx-2">•</span>
+              <span>{post[0].views} views</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <!-- Main Content -->
+        <div class="lg:col-span-8">
+          <div class="prose prose-lg max-w-none" set:html={htmlContent} />
+
+          <!-- Tags -->
+          {tags.length > 0 && (
+            <div class="mt-8 pt-8 border-t border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">Tags</h2>
+              <div class="flex flex-wrap gap-2">
+                {tags.map((tag: any) => (
+                  <a
+                    href={`/tag/${tag.slug}`}
+                    class="bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full hover:bg-gray-200 transition-colors duration-200"
+                  >
+                    {tag.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <!-- Author Bio -->
+          <div class="mt-8 pt-8 border-t border-gray-200">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-xl font-semibold">
+                  {(post[0].full_name || post[0].username).charAt(0)}
+                </div>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                  {post[0].full_name || post[0].username}
+                </h3>
+                <p class="text-gray-600 mt-1">{post[0].author_bio || 'Content Writer at OpportunityCenter'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-4">
+          <!-- Related Posts -->
+          {relatedPosts.length > 0 && (
+            <div class="bg-gray-50 rounded-lg p-6">
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Related Posts</h2>
+              <div class="space-y-4">
+                {relatedPosts.map((relatedPost: any) => (
+                  <div class="group">
+                    <a href={`/blog/${relatedPost.slug}`} class="block">
+                      <div class="aspect-video rounded-lg overflow-hidden mb-2">
+                        <img
+                          src={relatedPost.featured_image || '/images/default-post.jpg'}
+                          alt={relatedPost.title}
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          width="400"
+                          height="225"
+                          loading="lazy"
+                        />
+                      </div>
+                      <h3 class="text-lg font-semibold text-gray-900 group-hover:text-primary-600 transition-colors duration-200">
+                        {relatedPost.title}
+                      </h3>
+                    </a>
+                    <div class="flex items-center text-sm text-gray-500 mt-1">
+                      <span>{formatDate(relatedPost.published_at)}</span>
+                      <span class="mx-2">•</span>
+                      <span>{relatedPost.reading_time || 5} min read</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <!-- Newsletter Signup -->
+          <div class="bg-primary-50 rounded-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Stay Updated</h2>
+            <p class="text-gray-600 mb-4">
+              Get the latest opportunities delivered directly to your inbox
+            </p>
+            <form class="space-y-3">
+              <input
+                type="email"
+                placeholder="Your email address"
+                class="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                required
+              />
+              <button
+                type="submit"
+                class="w-full bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors duration-200"
+              >
+                Subscribe
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+</MainLayout>

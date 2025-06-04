@@ -1,0 +1,170 @@
+---
+import SEOHead from '../components/seo/SEOHead.astro';
+import Header from '../components/common/Header.astro';
+import Footer from '../components/common/Footer.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  openGraph?: {
+    basic: {
+      title: string;
+      type: string;
+      image: string;
+      url: string;
+    };
+    optional?: {
+      description?: string;
+      siteName?: string;
+      locale?: string;
+    }
+  };
+  twitter?: {
+    card?: string;
+    site?: string;
+    creator?: string;
+  };
+  articleSchema?: any;
+}
+
+const { 
+  title, 
+  description, 
+  canonical, 
+  openGraph, 
+  twitter,
+  articleSchema
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <SEOHead 
+      title={title}
+      description={description}
+      canonical={canonical}
+      openGraph={openGraph}
+      twitter={twitter}
+      articleSchema={articleSchema}
+    />
+    <style is:global>
+      @tailwind base;
+      @tailwind components;
+      @tailwind utilities;
+      
+      html {
+        scroll-behavior: smooth;
+      }
+      
+      body {
+        font-family: 'Inter', sans-serif;
+        color: #374151;
+      }
+      
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif;
+      }
+      
+      /* Animation classes */
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      .slide-up {
+        animation: slideUp 0.5s ease-in-out;
+      }
+      
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      
+      /* Line clamp utilities */
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      
+      .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="flex flex-col min-h-screen">
+      <Header />
+      
+      <main class="flex-grow">
+        <slot />
+      </main>
+      
+      <Footer />
+    </div>
+    
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-banner" class="fixed bottom-0 left-0 w-full bg-gray-900 text-white py-4 px-6 flex flex-col md:flex-row items-center justify-between z-50 shadow-lg transform translate-y-full transition-transform duration-300">
+      <div class="mb-4 md:mb-0 md:mr-8">
+        <p class="text-sm">
+          We use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies.
+          <a href="/cookie-policy" class="underline hover:text-primary-300">Learn more</a>
+        </p>
+      </div>
+      <div class="flex space-x-4">
+        <button id="accept-cookies" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+          Accept
+        </button>
+        <button id="decline-cookies" class="bg-transparent hover:bg-gray-800 border border-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+          Decline
+        </button>
+      </div>
+    </div>
+    
+    <script>
+      // Cookie consent banner
+      document.addEventListener('DOMContentLoaded', () => {
+        const cookieBanner = document.getElementById('cookie-banner');
+        const acceptBtn = document.getElementById('accept-cookies');
+        const declineBtn = document.getElementById('decline-cookies');
+        
+        const hasCookieConsent = localStorage.getItem('cookie-consent');
+        
+        if (!hasCookieConsent) {
+          setTimeout(() => {
+            if (cookieBanner) {
+              cookieBanner.style.transform = 'translateY(0)';
+            }
+          }, 1000);
+        }
+        
+        acceptBtn?.addEventListener('click', () => {
+          localStorage.setItem('cookie-consent', 'accepted');
+          if (cookieBanner) {
+            cookieBanner.style.transform = 'translateY(full)';
+          }
+        });
+        
+        declineBtn?.addEventListener('click', () => {
+          localStorage.setItem('cookie-consent', 'declined');
+          if (cookieBanner) {
+            cookieBanner.style.transform = 'translateY(full)';
+          }
+        });
+      });
+    </script>
+    
+    <!-- Google AdSense Script (commented until you have an AdSense account) -->
+    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_ID"></script> -->
+  </body>
+</html>

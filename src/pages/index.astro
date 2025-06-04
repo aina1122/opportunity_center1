@@ -1,0 +1,260 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import PostCard from '../components/blog/PostCard.astro';
+import db from '../db/database';
+
+// Fetch featured posts
+const featuredPosts: any = await db.query(`
+  SELECT p.id, p.title, p.slug, p.excerpt, p.featured_image, p.published_at, p.reading_time,
+         u.username, u.full_name,
+         c.name as category_name, c.slug as category_slug
+  FROM posts p
+  JOIN users u ON p.author_id = u.id
+  LEFT JOIN categories c ON p.category_id = c.id
+  WHERE p.status = 'published' AND p.featured = 1
+  ORDER BY p.published_at DESC
+  LIMIT 3
+`);
+
+// Fetch recent posts by category
+const categories: any = await db.query(`
+  SELECT id, name, slug, description 
+  FROM categories 
+  ORDER BY name
+  LIMIT 5
+`);
+
+// Get recent posts for each category
+for (const category of categories) {
+  const posts: any = await db.query(`
+    SELECT p.id, p.title, p.slug, p.excerpt, p.featured_image, p.published_at, p.reading_time,
+           u.username, u.full_name
+    FROM posts p
+    JOIN users u ON p.author_id = u.id
+    WHERE p.status = 'published' AND p.category_id = ?
+    ORDER BY p.published_at DESC
+    LIMIT 4
+  `, [category.id]);
+  
+  category.posts = posts;
+}
+
+// Format posts for display
+const formattedFeaturedPosts = featuredPosts.map((post: any) => ({
+  ...post,
+  author: {
+    username: post.username,
+    full_name: post.full_name
+  },
+  category: post.category_name ? {
+    name: post.category_name,
+    slug: post.category_slug
+  } : null
+}));
+---
+
+<MainLayout
+  title="OpportunityCenter - Scholarships, Jobs, and Internships in USA & Europe"
+  description="Discover scholarships, jobs, internships, loan schemes, and earning methods in USA and Europe. Stay updated with the latest opportunities."
+>
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16 md:py-24">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center">
+        <h1 class="text-3xl md:text-5xl font-bold mb-6 font-heading">
+          Your Gateway to Global Opportunities
+        </h1>
+        <p class="text-xl md:text-2xl mb-8 text-primary-100">
+          Discover scholarships, jobs, internships, and more in the USA and Europe
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <a href="/blog" class="bg-white text-primary-700 hover:bg-primary-50 px-6 py-3 rounded-md font-medium text-lg transition-colors duration-200">
+            Explore Opportunities
+          </a>
+          <a href="/contact" class="bg-transparent border-2 border-white text-white hover:bg-white hover:text-primary-700 px-6 py-3 rounded-md font-medium text-lg transition-colors duration-200">
+            Contact Us
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Categories Section -->
+  <section class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold font-heading text-gray-900 mb-4">Explore by Category</h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          Find the perfect opportunity that matches your interests and goals
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        {categories.map((category: any) => (
+          <a href={`/category/${category.slug}`} class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 p-6 text-center group">
+            <div class="mb-4 text-primary-600 mx-auto w-16 h-16 flex items-center justify-center bg-primary-100 rounded-full group-hover:bg-primary-200 transition-colors duration-300">
+              {category.slug === 'scholarships' && (
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                </svg>
+              )}
+              {category.slug === 'jobs' && (
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                  <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
+                </svg>
+              )}
+              {category.slug === 'internships' && (
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                </svg>
+              )}
+              {category.slug === 'loan-schemes' && (
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd" />
+                </svg>
+              )}
+              {category.slug === 'earning-methods' && (
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <h3 class="text-xl font-semibold font-heading text-gray-800 mb-2 group-hover:text-primary-600 transition-colors duration-200">
+              {category.name}
+            </h3>
+            <p class="text-gray-600 line-clamp-2 text-sm">
+              {category.description || `Explore the latest ${category.name.toLowerCase()} opportunities for students and professionals.`}
+            </p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+  
+  <!-- Featured Posts Section -->
+  {featuredPosts.length > 0 && (
+    <section class="py-16">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold font-heading text-gray-900 mb-4">Featured Opportunities</h2>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Discover our hand-picked selection of the best opportunities
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-1 gap-8">
+          {formattedFeaturedPosts.map((post: any, index: number) => (
+            <PostCard post={post} featured={index === 0} />
+          ))}
+        </div>
+        
+        <div class="text-center mt-10">
+          <a href="/blog" class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+            View All Posts
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+  )}
+  
+  <!-- Category Posts Sections -->
+  {categories.map((category: any) => (
+    category.posts && category.posts.length > 0 && (
+      <section class="py-16 bg-gray-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold font-heading text-gray-900">{category.name}</h2>
+            <a href={`/category/${category.slug}`} class="text-primary-600 hover:text-primary-700 font-medium flex items-center">
+              View All
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+            </a>
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {category.posts.map((post: any) => (
+              <div class="bg-white rounded-lg shadow-sm overflow-hidden transition-transform duration-300 hover:-translate-y-1 hover:shadow-md">
+                <a href={`/blog/${post.slug}`} class="block">
+                  <div class="relative overflow-hidden aspect-video">
+                    <img 
+                      src={post.featured_image || '/images/default-post.jpg'} 
+                      alt={post.title} 
+                      class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                      width="400"
+                      height="225"
+                      loading="lazy"
+                    />
+                  </div>
+                </a>
+                
+                <div class="p-4">
+                  <div class="flex items-center text-xs text-gray-500 mb-2">
+                    <span>{new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span class="mx-2">•</span>
+                    <span>{post.reading_time || 5} min read</span>
+                  </div>
+                  
+                  <h3 class="text-lg font-heading font-semibold mb-2 text-gray-800 leading-tight line-clamp-2">
+                    <a href={`/blog/${post.slug}`} class="hover:text-primary-600 transition-colors duration-200">
+                      {post.title}
+                    </a>
+                  </h3>
+                  
+                  <p class="text-gray-600 text-sm line-clamp-2 mb-4">
+                    {post.excerpt}
+                  </p>
+                  
+                  <a href={`/blog/${post.slug}`} class="text-primary-600 text-sm font-medium hover:text-primary-700 transition-colors duration-200 flex items-center">
+                    Read more
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H5a1 1 0 110-2h9.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  ))}
+  
+  <!-- CTA Section -->
+  <section class="py-16 bg-gradient-to-r from-secondary-600 to-secondary-800 text-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto text-center">
+        <h2 class="text-3xl font-bold font-heading mb-6">
+          Don't Miss Any Opportunities
+        </h2>
+        <p class="text-lg mb-8 text-secondary-100">
+          Subscribe to our newsletter and stay updated with the latest scholarships, jobs, and internships
+        </p>
+        <form class="max-w-md mx-auto">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input 
+              type="email" 
+              placeholder="Enter your email" 
+              class="flex-1 px-4 py-3 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-secondary-500"
+              required
+            />
+            <button 
+              type="submit" 
+              class="bg-white text-secondary-700 hover:bg-secondary-100 px-6 py-3 rounded-md font-medium transition-colors duration-200"
+            >
+              Subscribe
+            </button>
+          </div>
+          <p class="text-xs mt-3 text-secondary-200">
+            We respect your privacy. Unsubscribe at any time.
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+</MainLayout>

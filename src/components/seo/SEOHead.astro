@@ -1,0 +1,155 @@
+---
+import { SEO } from 'astro-seo';
+import db from '../../db/database';
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  openGraph?: {
+    basic: {
+      title: string;
+      type: string;
+      image: string;
+      url: string;
+    };
+    optional?: {
+      description?: string;
+      siteName?: string;
+      locale?: string;
+    }
+  };
+  twitter?: {
+    card?: string;
+    site?: string;
+    creator?: string;
+  };
+  articleSchema?: any;
+}
+
+// Fetch site settings
+const settingsResult: any = await db.query('SELECT setting_key, setting_value FROM settings');
+const settings = settingsResult.reduce((acc: any, setting: any) => {
+  acc[setting.setting_key] = setting.setting_value;
+  return acc;
+}, {});
+
+const siteTitle = settings.site_title || 'OpportunityCenter - Scholarships, Jobs, and Internships';
+const siteDescription = settings.site_description || 'Discover scholarships, jobs, internships, loan schemes, and earning methods in USA and Europe.';
+const siteDomain = 'opportunitycenter.site';
+const siteUrl = `https://${siteDomain}`;
+
+// Default props for SEO
+const {
+  title = siteTitle,
+  description = siteDescription,
+  canonical = Astro.url.pathname,
+  openGraph,
+  twitter,
+  articleSchema
+} = Astro.props;
+
+// Construct full canonical URL
+const fullCanonical = canonical.startsWith('http') ? canonical : `${siteUrl}${canonical}`;
+
+// Default OpenGraph data
+const defaultOpenGraph = {
+  basic: {
+    title: title,
+    type: 'website',
+    image: `${siteUrl}/images/og-default.jpg`,
+    url: fullCanonical,
+  },
+  optional: {
+    description: description,
+    siteName: siteTitle,
+    locale: 'en_US',
+  }
+};
+
+// Default Twitter data
+const defaultTwitter = {
+  card: 'summary_large_image',
+  site: settings.social_twitter || '@opportunitycenter',
+  creator: settings.social_twitter || '@opportunitycenter'
+};
+
+// Merge with provided data
+const ogData = {
+  ...defaultOpenGraph,
+  basic: { ...defaultOpenGraph.basic, ...(openGraph?.basic || {}) },
+  optional: { ...defaultOpenGraph.optional, ...(openGraph?.optional || {}) }
+};
+
+const twitterData = { ...defaultTwitter, ...twitter };
+
+// Organization schema
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": siteTitle,
+  "url": siteUrl,
+  "logo": `${siteUrl}/images/logo.png`,
+  "sameAs": [
+    settings.social_facebook,
+    settings.social_twitter,
+    settings.social_instagram
+  ].filter(Boolean)
+};
+
+// WebSite schema
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": siteTitle,
+  "url": siteUrl,
+  "description": siteDescription,
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": `${siteUrl}/search?q={search_term_string}`
+    },
+    "query-input": "required name=search_term_string"
+  }
+};
+
+// Prepare JSON-LD schemas
+const schemas = [organizationSchema, websiteSchema];
+if (articleSchema) {
+  schemas.push(articleSchema);
+}
+---
+
+<!-- SEO Meta Tags -->
+<SEO
+  title={title}
+  description={description}
+  canonical={fullCanonical}
+  openGraph={ogData}
+  twitter={twitterData}
+  extend={{
+    link: [
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "anonymous" }
+    ],
+    meta: [
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "generator", content: Astro.generator },
+      { name: "application-name", content: siteTitle },
+      { name: "apple-mobile-web-app-title", content: siteTitle },
+      { name: "theme-color", content: "#0e8be8" },
+      { name: "msapplication-TileColor", content: "#0e8be8" },
+      { name: "msapplication-config", content: "/browserconfig.xml" }
+    ],
+  }}
+/>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!-- Schema.org JSON-LD -->
+{schemas.map(schema => (
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+))}

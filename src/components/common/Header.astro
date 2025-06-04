@@ -1,0 +1,106 @@
+---
+import db from '../../db/database';
+
+// Fetch categories for the navigation
+const categories: any = await db.query('SELECT name, slug FROM categories ORDER BY name LIMIT 5');
+
+// Fetch site settings
+const settingsResult: any = await db.query('SELECT setting_key, setting_value FROM settings WHERE setting_key IN ("site_title", "logo_url")');
+const settings = settingsResult.reduce((acc: any, setting: any) => {
+  acc[setting.setting_key] = setting.setting_value;
+  return acc;
+}, {});
+
+const siteTitle = settings.site_title || 'OpportunityCenter';
+const logoUrl = settings.logo_url || '/images/logo.png';
+
+// Get current path for active link styling
+const currentPath = Astro.url.pathname;
+---
+
+<header class="bg-white shadow-sm sticky top-0 z-50">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center py-4">
+      <!-- Logo -->
+      <a href="/" class="flex items-center">
+        <img src={logoUrl} alt={siteTitle} class="h-8 w-auto mr-2" />
+        <span class="text-xl font-heading font-semibold text-primary-600">OpportunityCenter</span>
+      </a>
+      
+      <!-- Desktop Navigation -->
+      <nav class="hidden md:flex space-x-1">
+        <a href="/" class={`px-3 py-2 rounded-md text-sm font-medium ${currentPath === '/' ? 'text-primary-600' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+          Home
+        </a>
+        <a href="/blog" class={`px-3 py-2 rounded-md text-sm font-medium ${currentPath.startsWith('/blog') ? 'text-primary-600' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+          Blog
+        </a>
+        {categories.map((category: any) => (
+          <a href={`/category/${category.slug}`} class={`px-3 py-2 rounded-md text-sm font-medium ${currentPath === `/category/${category.slug}` ? 'text-primary-600' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+            {category.name}
+          </a>
+        ))}
+        <a href="/about" class={`px-3 py-2 rounded-md text-sm font-medium ${currentPath === '/about' ? 'text-primary-600' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+          About
+        </a>
+        <a href="/contact" class={`px-3 py-2 rounded-md text-sm font-medium ${currentPath === '/contact' ? 'text-primary-600' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+          Contact
+        </a>
+      </nav>
+      
+      <!-- Search Button (Desktop) -->
+      <div class="hidden md:flex items-center">
+        <a href="/search" class="p-2 text-gray-600 hover:text-primary-600 transition-colors duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+          </svg>
+        </a>
+      </div>
+      
+      <!-- Mobile Menu Button -->
+      <button type="button" class="md:hidden p-2 rounded-md text-gray-600 hover:text-primary-600 focus:outline-none" id="mobile-menu-button">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Mobile Menu -->
+    <div class="hidden md:hidden pb-3" id="mobile-menu">
+      <div class="px-2 pt-2 pb-3 space-y-1">
+        <a href="/" class={`block px-3 py-2 rounded-md text-base font-medium ${currentPath === '/' ? 'text-primary-600 bg-primary-50' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+          Home
+        </a>
+        <a href="/blog" class={`block px-3 py-2 rounded-md text-base font-medium ${currentPath.startsWith('/blog') ? 'text-primary-600 bg-primary-50' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+          Blog
+        </a>
+        {categories.map((category: any) => (
+          <a href={`/category/${category.slug}`} class={`block px-3 py-2 rounded-md text-base font-medium ${currentPath === `/category/${category.slug}` ? 'text-primary-600 bg-primary-50' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+            {category.name}
+          </a>
+        ))}
+        <a href="/about" class={`block px-3 py-2 rounded-md text-base font-medium ${currentPath === '/about' ? 'text-primary-600 bg-primary-50' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+          About
+        </a>
+        <a href="/contact" class={`block px-3 py-2 rounded-md text-base font-medium ${currentPath === '/contact' ? 'text-primary-600 bg-primary-50' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+          Contact
+        </a>
+        <a href="/search" class={`block px-3 py-2 rounded-md text-base font-medium ${currentPath === '/search' ? 'text-primary-600 bg-primary-50' : 'text-gray-700 hover:text-primary-600 hover:bg-primary-50'}`}>
+          Search
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Toggle mobile menu
+  const mobileMenuButton = document.getElementById('mobile-menu-button');
+  const mobileMenu = document.getElementById('mobile-menu');
+  
+  if (mobileMenuButton && mobileMenu) {
+    mobileMenuButton.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+  }
+</script>
